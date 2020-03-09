@@ -1,5 +1,56 @@
 ﻿@page "/"
+@using Data;
+@using MQTTnet;
+@using System.Text;
+@using Models;
+@using BlazorMqttClient.Components;
+<h1>Mqtt Client form Blazor :)</h1>
 
-<h1>Hello, world!</h1>
+<h5>@Status</h5>
 
-Welcome to your new app.
+<h4>This is the current list of messages recieved from the Mqtt Broker: </h4>
+
+<ul>
+    @foreach (var item in messages)
+    {
+        var message = item;
+        <MessageComponent @bind-Message="@message"></MessageComponent>
+    }
+</ul>
+
+@code{
+    private List<Message> messages = new List<Message>();
+    private string Status;
+    private MqttClientService MqttService;
+
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        MqttService = new MqttClientService();
+        var res = await MqttService.ConnectAsync();
+        Status = res ? "Connected" : "Error, not connected";
+        MqttService.Subscribe();
+
+        MqttService.MessageRecievedHandler += OnMessageRecieved;
+    }
+
+    private async void OnMessageRecieved(Object sender, EventArgs e)
+    {
+        Console.WriteLine("Event Fired");
+        var args = e as MqttApplicationMessageReceivedEventArgs;
+        string message ="";
+        message += "&#10;";
+        message += "Message Recieved: &#10;";
+        message += $"+ Topic = {args.ApplicationMessage.Topic}&#10;";
+        message += $"+ Payload = {Encoding.UTF8.GetString(args.ApplicationMessage.Payload)}&#10;";
+        messages.Add(new Message { Payload = Encoding.UTF8.GetString(args.ApplicationMessage.Payload), Topic = args.ApplicationMessage.Topic, ClientId=args.ClientId });
+        Console.WriteLine(messages);
+        await this.InvokeAsync(this.StateHasChanged);
+    }
+}

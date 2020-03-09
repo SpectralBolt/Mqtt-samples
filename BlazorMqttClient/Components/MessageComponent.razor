@@ -1,0 +1,15 @@
+﻿@using Models;
+
+<RadzenCard>
+    <h4>Message recieved from: @Message.ClientId</h4>
+    <hr />
+    <h5>Topic: @Message.Topic</h5>
+    <p>@Message.Payload</p>
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public Message Message { get; set; }
+    [Parameter]
+    public EventCallback<Message> MessageChanged { get; set; }
+}
